@@ -2,12 +2,14 @@
 
 Selamat datang di project Aplikasi Clustering Data Mahasiswa! Ini adalah sebuah aplikasi web yang dibangun menggunakan **Flask** dan **Tailwind CSS** untuk melakukan analisis clustering pada data mahasiswa. Tujuan dari aplikasi ini adalah untuk mengelompokkan mahasiswa ke dalam beberapa cluster berdasarkan atribut tertentu, sehingga dapat ditemukan pola atau wawasan yang berguna.
 
+## Developer Collaboration with yaarnDev 
+<a href="https://github.com/yaarnDev" target="_blank">oyar's GitHub</a>
 ## Tampilan Aplikasi
 
 Berikut adalah tampilan aplikasi saat sedang memproses data clustering:
 
 ![Proses Clustering Data](assets/image_90b5a8.png)
-*(Catatan: Pastikan Anda sudah meletakkan gambar `image_90b5a8.png` di dalam folder `assets` di root project Anda)*
+
 
 ---
 
