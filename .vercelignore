@@ -1,0 +1,14 @@
+# Abaikan virtual environment
+.venv/
+venv/
+
+# Abaikan cache Python
+__pycache__/
+*.pyc
+
+# Abaikan file data yang tidak perlu ada di server
+*.csv
+*.xlsx
+
+# Abaikan folder assets jika tidak digunakan oleh server
+assets/
