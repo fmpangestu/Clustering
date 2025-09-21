@@ -3,12 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Clustering App</title>
-    <link
-      rel="icon"
-      type="image/png"
-      href="{{ url_for('static', filename='favicon.png') }}"
-    />
+    <title>Upload Clustering</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -18,8 +13,6 @@
               gradient: "gradient 6s ease infinite",
               float: "float 6s ease-in-out infinite",
               "pulse-slow": "pulse 3s ease-in-out infinite",
-              "bounce-slow": "bounce 2s infinite",
-              "spin-slow": "spin 3s linear infinite",
               "fade-in": "fadeIn 0.8s ease-out",
               "slide-up": "slideUp 0.6s ease-out",
               "scale-in": "scaleIn 0.5s ease-out",
@@ -51,14 +44,6 @@
       };
     </script>
     <style>
-      /* Table preview */
-      /* .preview-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.775rem; /* text-sm */
-        /* background-color: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(5px);
-        border-radius: 0.75rem; rounded-xl */ */
       .preview-table {
         width: 100%;
         border-collapse: collapse;
@@ -78,38 +63,29 @@
         white-space: nowrap;
       }
       .preview-table th {
-        font-weight: 600; /* font-semibold */
         font-weight: 600;
         background-color: rgba(255, 255, 255, 0.1);
       }
       .preview-table tbody tr:last-child td {
         border-bottom: none;
       }
-
-      #filePreview::-webkit-scrollbar {
-        width: 0;
-        height: 0;
-        background: transparent;
-      }
-      #filePreview {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-      }
       .custom-scrollbar::-webkit-scrollbar {
-          height: 8px;
-          width: 8px;
+        height: 8px;
+        width: 8px;
       }
       .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
       }
       .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: linear-gradient(90deg,rgba(174, 0, 255, 1) 18%, rgb(232, 84, 104) 85%);
-          border-radius: 4px;
+        background: linear-gradient(
+          90deg,
+          rgba(174, 0, 255, 1) 18%,
+          rgb(232, 84, 104) 85%
+        );
+        border-radius: 4px;
       }
     </style>
-  </head>
-        
   </head>
   <body
     class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 animate-gradient bg-[length:400%_400%] p-4 sm:p-6"
@@ -193,7 +169,6 @@
             <label class="block text-white text-lg font-semibold mb-4">
               📊 Unggah File Excel/CSV
             </label>
-
             <div class="relative">
               <input
                 type="file"
@@ -253,8 +228,10 @@
             <h3 class="text-white text-lg font-semibold mb-3">
               <span class="mr-2">👀</span>Pratinjau File
             </h3>
-            <div id="filePreview" class="overflow-x-auto max-h-64"></div>
-            <div id="filePreview" class="overflow-x-auto custom-scrollbar"></div>
+            <div
+              id="filePreview"
+              class="overflow-x-auto custom-scrollbar"
+            ></div>
           </div>
 
           <div id="featureSelectionContainer" class="hidden space-y-4">
@@ -410,12 +387,10 @@
             ></div>
           </div>
         </div>
-
         <h3 class="text-2xl font-bold text-white mb-4">Memproses Data</h3>
         <p class="text-gray-300 mb-6">
           Algoritma clustering sedang menganalisis data Anda...
         </p>
-
         <div class="space-y-3 text-left">
           <div id="step1" class="flex items-center text-gray-400">
             <div
@@ -458,7 +433,6 @@
             <span>Menyiapkan visualisasi</span>
           </div>
         </div>
-
         <div class="mt-6 text-sm text-gray-400">
           Mohon tunggu, proses ini mungkin memakan waktu beberapa menit...
         </div>
@@ -536,15 +510,10 @@
             fetchColumns(new FormData(clusteringForm)),
           ]);
         }
-      },
 
-      document
-        .getElementById("clusteringForm")
-        .addEventListener("submit", function (e) {
-          e.preventDefault();
-          async function fetchPreview(formData) {
-            try {
-              const response = await fetch("/preview_excel", {
+        async function fetchPreview(formData) {
+          try {
+            const response = await fetch("/preview_excel", {
               method: "POST",
               body: formData,
             });
@@ -556,7 +525,6 @@
             filePreview.innerHTML = `<div class="bg-red-800/20 text-red-300 p-4 rounded-lg border border-red-800/50">Kesalahan Jaringan saat memuat pratinjau.</div>`;
           }
         }
-      }),
 
         async function fetchColumns(formData) {
           try {
@@ -579,7 +547,7 @@
             featureCheckboxes.innerHTML = `<p class="text-red-400 text-center py-4 col-span-full">Kesalahan Jaringan saat memuat kolom.</p>`;
             featureSelectionContainer.classList.remove("hidden");
           }
-        },
+        }
 
         function generateFeatureCheckboxes(columns) {
           featureCheckboxes.innerHTML = "";
@@ -603,70 +571,13 @@
           if (!hasOptions) {
             featureCheckboxes.innerHTML = `<p class="text-yellow-400 text-center py-4 col-span-full">Tidak ada kolom valid yang bisa dipilih untuk clustering.</p>`;
           }
-        },
+        }
 
         function handleFormSubmit(e) {
           if (!fileInput.files[0]) {
             e.preventDefault();
             alert("Silakan pilih file terlebih dahulu!");
             return;
-          }
-          showLoading();
-          simulateProgress();
-        }
-      );
-
-      function showLoading() {
-        document.getElementById("loadingModal").classList.remove("hidden");
-        document.body.style.overflow = "hidden";
-      }
-
-      function simulateProgress() {
-        const steps = ["step1", "step2", "step3", "step4"];
-        const stepDurations = [2000, 3000, 5000, 2000];
-        let currentStep = 0;
-        function activateStep() {
-          if (currentStep < steps.length) {
-            const stepElement = document.getElementById(steps[currentStep]);
-            const circle = stepElement.querySelector("div");
-            const dot = stepElement.querySelector("div > div");
-            stepElement.classList.remove("text-gray-400");
-            stepElement.classList.add("text-blue-400");
-            circle.classList.remove("border-gray-400");
-            circle.classList.add("border-blue-400");
-            const loadingInterval = setInterval(() => {
-              dot.classList.toggle("opacity-100");
-              dot.classList.toggle("opacity-30");
-            }, 600);
-            let progressDots = 0;
-            const maxDots = 3;
-            const progressInterval = setInterval(() => {
-              progressDots = (progressDots + 1) % (maxDots + 1);
-              const stepText = stepElement.querySelector("span");
-              const originalText = stepText.textContent.replace(/\.+$/, "");
-              stepText.textContent = originalText + ".".repeat(progressDots);
-            }, 800);
-            setTimeout(() => {
-              clearInterval(loadingInterval);
-              clearInterval(progressInterval);
-              const stepText = stepElement.querySelector("span");
-              stepText.textContent = stepText.textContent.replace(/\.+$/, "");
-              stepElement.classList.remove("text-blue-400");
-              stepElement.classList.add("text-green-400");
-              circle.classList.remove("border-blue-400");
-              circle.classList.add("border-green-400");
-              dot.classList.remove("bg-gray-400", "opacity-0", "opacity-30");
-              dot.classList.add("bg-green-400", "opacity-100");
-              dot.innerHTML = `
-                            <svg class="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                            </svg>
-                        `;
-              currentStep++;
-              if (currentStep < steps.length) {
-                setTimeout(activateStep, 500);
-              }
-            }, stepDurations[currentStep]);
           }
           const selected = document.querySelectorAll(
             'input[name="selected_features"]:checked'
@@ -695,49 +606,46 @@
           loadingModal.classList.remove("hidden");
           document.body.style.overflow = "hidden";
         }
-        
+
         // [PERBAIKAN] Mengganti logika animasi agar tidak mengubah bentuk lingkaran
         function simulateProgress() {
-            const steps = ["step1", "step2", "step3", "step4"];
-            const stepDurations = [1500, 2000, 3000, 1000];
-            let currentStep = 0;
+          const steps = ["step1", "step2", "step3", "step4"];
+          const stepDurations = [1500, 2000, 3000, 1000];
+          let currentStep = 0;
 
-            function activateStep() {
-                if (currentStep >= steps.length) return;
+          function activateStep() {
+            if (currentStep >= steps.length) return;
 
-                const stepElement = document.getElementById(steps[currentStep]);
-                const circle = stepElement.querySelector("div");
-                const dot = circle.querySelector("div");
-                const text = stepElement.querySelector("span");
+            const stepElement = document.getElementById(steps[currentStep]);
+            const circle = stepElement.querySelector("div");
+            const dot = circle.querySelector("div");
+            const text = stepElement.querySelector("span");
 
-                // --- State: In Progress ---
-                text.classList.replace("text-gray-400", "text-white");
-                circle.classList.replace("border-gray-400", "border-blue-400");
-                dot.classList.remove("opacity-0");
-                dot.classList.add("animate-pulse"); // Optional: add pulse animation
+            // --- State: In Progress ---
+            text.classList.replace("text-gray-400", "text-white");
+            circle.classList.replace("border-gray-400", "border-blue-400");
+            dot.classList.remove("opacity-0");
+            dot.classList.add("animate-pulse"); // Optional: add pulse animation
 
-                // --- State: Transition to Complete ---
-                setTimeout(() => {
-                    text.classList.replace("text-blue-400", "text-green-400");
-                    circle.classList.replace("border-blue-400", "border-green-400");
-                    dot.classList.remove("animate-pulse");
+            // --- State: Transition to Complete ---
+            setTimeout(() => {
+              text.classList.replace("text-blue-400", "text-green-400");
+              circle.classList.replace("border-blue-400", "border-green-400");
+              dot.classList.remove("animate-pulse");
 
-                    // Ganti isi lingkaran dengan SVG centang tanpa mengubah ukuran
-                    circle.innerHTML = `<svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`;
+              // Ganti isi lingkaran dengan SVG centang tanpa mengubah ukuran
+              circle.innerHTML = `<svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`;
 
-                    currentStep++;
-                    
-                    if (currentStep < steps.length) {
-                        setTimeout(activateStep, 500); 
-                    }
-                }, stepDurations[currentStep]);
-            }
-            setTimeout(activateStep, 500);
+              currentStep++;
+
+              if (currentStep < steps.length) {
+                setTimeout(activateStep, 500);
+              }
+            }, stepDurations[currentStep]);
+          }
+          setTimeout(activateStep, 500);
         }
-        setTimeout(activateStep, 1000);
-      }
 
-      document.addEventListener("DOMContentLoaded", function () {
         // --- Initial Setup for floating elements ---
         const floatingElements = document.querySelectorAll(
           '[class*="animate-float"]'
