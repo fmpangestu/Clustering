@@ -52,13 +52,20 @@
     </script>
     <style>
       /* Table preview */
-      .preview-table {
+      /* .preview-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 0.775rem; /* text-sm */
+        /* background-color: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(5px);
+        border-radius: 0.75rem; rounded-xl */ */
+      .preview-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
         background-color: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(5px);
-        border-radius: 0.75rem; /* rounded-xl */
+        border-radius: 0.75rem;
         overflow: hidden;
         color: white;
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -72,6 +79,7 @@
       }
       .preview-table th {
         font-weight: 600; /* font-semibold */
+        font-weight: 600;
         background-color: rgba(255, 255, 255, 0.1);
       }
       .preview-table tbody tr:last-child td {
@@ -87,10 +95,24 @@
         scrollbar-width: none;
         -ms-overflow-style: none;
       }
+      .custom-scrollbar::-webkit-scrollbar {
+          height: 8px;
+          width: 8px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(90deg,rgba(174, 0, 255, 1) 18%, rgb(232, 84, 104) 85%);
+          border-radius: 4px;
+      }
     </style>
   </head>
+        
+  </head>
   <body
-    class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 animate-gradient bg-[length:400%_400%] p-4"
+    class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 animate-gradient bg-[length:400%_400%] p-4 sm:p-6"
   >
     <div class="fixed inset-0 overflow-hidden pointer-events-none">
       <div
@@ -127,7 +149,7 @@
       </div>
     </div>
 
-    <div class="relative max-w-2xl mx-auto mt-8 animate-fade-in">
+    <div class="relative max-w-2xl w-full mx-auto animate-fade-in">
       <div class="text-center mb-12 animate-slide-up">
         <div
           class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mb-6 animate-pulse-slow"
@@ -232,6 +254,20 @@
               <span class="mr-2">👀</span>Pratinjau File
             </h3>
             <div id="filePreview" class="overflow-x-auto max-h-64"></div>
+            <div id="filePreview" class="overflow-x-auto custom-scrollbar"></div>
+          </div>
+
+          <div id="featureSelectionContainer" class="hidden space-y-4">
+            <h3 class="text-white text-lg font-semibold mt-4">
+              ⚙️ Pilih Kolom untuk Clustering
+            </h3>
+            <div
+              id="featureCheckboxes"
+              class="grid grid-cols-2 md:grid-cols-3 gap-4"
+            ></div>
+            <div class="text-red-400 text-sm hidden" id="selectionWarning">
+              Pilih minimal 2 kolom numerik untuk proses clustering.
+            </div>
           </div>
 
           <div class="flex justify-center pt-4">
@@ -430,78 +466,146 @@
     </div>
 
     <script>
-      const fileInput = document.getElementById("fileInput");
-      const dropZone = document.getElementById("dropZone");
-      const uploadContent = document.getElementById("uploadContent");
-      const selectedFile = document.getElementById("selectedFile");
-      const fileNameElement = document.getElementById("fileName");
-      const filePreviewContainer = document.getElementById(
-        "filePreviewContainer"
-      );
-      const filePreview = document.getElementById("filePreview");
+      document.addEventListener("DOMContentLoaded", function () {
+        const fileInput = document.getElementById("fileInput");
+        const dropZone = document.getElementById("dropZone");
+        const uploadContent = document.getElementById("uploadContent");
+        const selectedFileDiv = document.getElementById("selectedFile");
+        const fileNameElement = document.getElementById("fileName");
+        const filePreviewContainer = document.getElementById(
+          "filePreviewContainer"
+        );
+        const filePreview = document.getElementById("filePreview");
+        const featureSelectionContainer = document.getElementById(
+          "featureSelectionContainer"
+        );
+        const featureCheckboxes = document.getElementById("featureCheckboxes");
+        const selectionWarning = document.getElementById("selectionWarning");
+        const clusteringForm = document.getElementById("clusteringForm");
+        const loadingModal = document.getElementById("loadingModal");
 
-      fileInput.addEventListener("change", handleFileSelect);
-      dropZone.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        dropZone.classList.add("border-purple-400", "bg-white/15");
-      });
-      dropZone.addEventListener("dragleave", (e) => {
-        e.preventDefault();
-        dropZone.classList.remove("border-purple-400", "bg-white/15");
-      });
-      dropZone.addEventListener("drop", (e) => {
-        e.preventDefault();
-        dropZone.classList.remove("border-purple-400", "bg-white/15");
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-          fileInput.files = files;
-          handleFileSelect();
-        }
-      });
+        // --- Event Listeners ---
+        fileInput.addEventListener("change", handleFileSelect);
+        dropZone.addEventListener("dragover", handleDragOver);
+        dropZone.addEventListener("dragleave", handleDragLeave);
+        dropZone.addEventListener("drop", handleDrop);
+        clusteringForm.addEventListener("submit", handleFormSubmit);
 
-      async function handleFileSelect() {
-        const file = fileInput.files[0];
-        if (!file) {
-          filePreviewContainer.classList.add("hidden");
-          return;
+        // --- Handler Functions ---
+        function handleDragOver(e) {
+          e.preventDefault();
+          dropZone.classList.add("border-purple-400", "bg-white/15");
         }
 
-        fileNameElement.textContent = file.name;
-        uploadContent.classList.add("hidden");
-        selectedFile.classList.remove("hidden");
-        selectedFile.classList.add("animate-scale-in");
+        function handleDragLeave(e) {
+          e.preventDefault();
+          dropZone.classList.remove("border-purple-400", "bg-white/15");
+        }
 
-        filePreviewContainer.classList.remove("hidden");
-        filePreview.innerHTML = `<p class="text-gray-400 text-center py-4">Memuat pratinjau...</p>`;
-
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-          const response = await fetch("/preview_excel", {
-            method: "POST",
-            body: formData,
-          });
-
-          if (response.ok) {
-            const htmlTable = await response.text();
-            filePreview.innerHTML = htmlTable;
-            // filePreview.classList.add('preview-table');
-          } else {
-            const errorText = await response.text();
-            filePreview.innerHTML = errorText;
+        function handleDrop(e) {
+          e.preventDefault();
+          dropZone.classList.remove("border-purple-400", "bg-white/15");
+          if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelect();
           }
-        } catch (error) {
-          filePreview.innerHTML = `<div class="bg-red-800/20 text-red-300 p-4 rounded-lg border border-red-800/50">
-                                            <p class="font-semibold mb-2">Kesalahan Jaringan!</p>
-                                            <p class="text-sm">Tidak dapat terhubung ke server. Pastikan aplikasi Flask berjalan dengan benar.</p>
-                                         </div>`;
         }
-      }
+
+        async function handleFileSelect() {
+          const file = fileInput.files[0];
+          if (!file) {
+            resetUI();
+            return;
+          }
+
+          fileNameElement.textContent = file.name;
+          uploadContent.classList.add("hidden");
+          selectedFileDiv.classList.remove("hidden");
+          selectedFileDiv.classList.add("animate-scale-in");
+
+          filePreviewContainer.classList.remove("hidden");
+          featureSelectionContainer.classList.add("hidden");
+          filePreview.innerHTML = `<p class="text-gray-400 text-center py-4">Memuat pratinjau...</p>`;
+          featureCheckboxes.innerHTML = `<p class="text-gray-400 text-center py-4 col-span-full">Memuat pilihan kolom...</p>`;
+
+          const formData = new FormData();
+          formData.append("file", file);
+
+          await Promise.all([
+            fetchPreview(new FormData(clusteringForm)),
+            fetchColumns(new FormData(clusteringForm)),
+          ]);
+        }
+      },
 
       document
         .getElementById("clusteringForm")
         .addEventListener("submit", function (e) {
+          e.preventDefault();
+          async function fetchPreview(formData) {
+            try {
+              const response = await fetch("/preview_excel", {
+              method: "POST",
+              body: formData,
+            });
+            const responseText = await response.text();
+            filePreview.innerHTML = response.ok
+              ? responseText
+              : `<div class="bg-red-800/20 text-red-300 p-4 rounded-lg border border-red-800/50">${responseText}</div>`;
+          } catch (error) {
+            filePreview.innerHTML = `<div class="bg-red-800/20 text-red-300 p-4 rounded-lg border border-red-800/50">Kesalahan Jaringan saat memuat pratinjau.</div>`;
+          }
+        }
+      }),
+
+        async function fetchColumns(formData) {
+          try {
+            const response = await fetch("/get_columns", {
+              method: "POST",
+              body: formData,
+            });
+            const data = await response.json();
+
+            if (response.ok && data.columns) {
+              generateFeatureCheckboxes(data.columns);
+              featureSelectionContainer.classList.remove("hidden");
+            } else {
+              featureCheckboxes.innerHTML = `<p class="text-red-400 text-center py-4 col-span-full">${
+                data.error || "Gagal memuat kolom."
+              }</p>`;
+              featureSelectionContainer.classList.remove("hidden");
+            }
+          } catch (error) {
+            featureCheckboxes.innerHTML = `<p class="text-red-400 text-center py-4 col-span-full">Kesalahan Jaringan saat memuat kolom.</p>`;
+            featureSelectionContainer.classList.remove("hidden");
+          }
+        },
+
+        function generateFeatureCheckboxes(columns) {
+          featureCheckboxes.innerHTML = "";
+          const ignoredCols = ["No", "Nama", "NIM", "Cluster", "Kategori"];
+          let hasOptions = false;
+
+          columns.forEach((colName) => {
+            if (!ignoredCols.includes(colName)) {
+              hasOptions = true;
+              const checkboxDiv = document.createElement("div");
+              checkboxDiv.className =
+                "flex items-center p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors duration-200";
+              checkboxDiv.innerHTML = `
+                                <input type="checkbox" name="selected_features" value="${colName}" id="checkbox-${colName}" class="h-4 w-4 text-purple-600 bg-gray-700 border-gray-600 rounded-full focus:ring-purple-500 focus:ring-2 cursor-pointer">
+                                <label for="checkbox-${colName}" class="ml-3 text-sm font-medium text-gray-300 cursor-pointer">${colName}</label>
+                            `;
+              featureCheckboxes.appendChild(checkboxDiv);
+            }
+          });
+
+          if (!hasOptions) {
+            featureCheckboxes.innerHTML = `<p class="text-yellow-400 text-center py-4 col-span-full">Tidak ada kolom valid yang bisa dipilih untuk clustering.</p>`;
+          }
+        },
+
+        function handleFormSubmit(e) {
           if (!fileInput.files[0]) {
             e.preventDefault();
             alert("Silakan pilih file terlebih dahulu!");
@@ -509,7 +613,8 @@
           }
           showLoading();
           simulateProgress();
-        });
+        }
+      );
 
       function showLoading() {
         document.getElementById("loadingModal").classList.remove("hidden");
@@ -563,11 +668,77 @@
               }
             }, stepDurations[currentStep]);
           }
+          const selected = document.querySelectorAll(
+            'input[name="selected_features"]:checked'
+          ).length;
+          if (selected < 2) {
+            e.preventDefault();
+            selectionWarning.classList.remove("hidden");
+            return;
+          }
+
+          selectionWarning.classList.add("hidden");
+          showLoading();
+          simulateProgress();
+        }
+
+        function resetUI() {
+          uploadContent.classList.remove("hidden");
+          selectedFileDiv.classList.add("hidden");
+          filePreviewContainer.classList.add("hidden");
+          featureSelectionContainer.classList.add("hidden");
+          filePreview.innerHTML = "";
+          featureCheckboxes.innerHTML = "";
+        }
+
+        function showLoading() {
+          loadingModal.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
+        }
+        
+        // [PERBAIKAN] Mengganti logika animasi agar tidak mengubah bentuk lingkaran
+        function simulateProgress() {
+            const steps = ["step1", "step2", "step3", "step4"];
+            const stepDurations = [1500, 2000, 3000, 1000];
+            let currentStep = 0;
+
+            function activateStep() {
+                if (currentStep >= steps.length) return;
+
+                const stepElement = document.getElementById(steps[currentStep]);
+                const circle = stepElement.querySelector("div");
+                const dot = circle.querySelector("div");
+                const text = stepElement.querySelector("span");
+
+                // --- State: In Progress ---
+                text.classList.replace("text-gray-400", "text-white");
+                circle.classList.replace("border-gray-400", "border-blue-400");
+                dot.classList.remove("opacity-0");
+                dot.classList.add("animate-pulse"); // Optional: add pulse animation
+
+                // --- State: Transition to Complete ---
+                setTimeout(() => {
+                    text.classList.replace("text-blue-400", "text-green-400");
+                    circle.classList.replace("border-blue-400", "border-green-400");
+                    dot.classList.remove("animate-pulse");
+
+                    // Ganti isi lingkaran dengan SVG centang tanpa mengubah ukuran
+                    circle.innerHTML = `<svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`;
+
+                    currentStep++;
+                    
+                    if (currentStep < steps.length) {
+                        setTimeout(activateStep, 500); 
+                    }
+                }, stepDurations[currentStep]);
+            }
+            setTimeout(activateStep, 500);
         }
         setTimeout(activateStep, 1000);
       }
 
       document.addEventListener("DOMContentLoaded", function () {
+        // --- Initial Setup for floating elements ---
         const floatingElements = document.querySelectorAll(
           '[class*="animate-float"]'
         );
